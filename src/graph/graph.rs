@@ -1,7 +1,9 @@
-use itertools::Itertools;
-use rand::Rng;
 use std::fmt::{Display, Formatter};
 use std::ops::IndexMut;
+
+use itertools::Itertools;
+use rand::Rng;
+
 pub type Bin = u32;
 
 pub trait Graph: IndexMut<Self::Vertex, Output = Bin> + Default {
@@ -35,6 +37,14 @@ pub struct Dot<G: Graph>(pub G);
 impl<G: Graph> Display for Dot<G> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "strict graph {{")?;
+        writeln!(
+            f,
+            "label = \"N = {}, D = {}, gap = {}, upper_gap = {}\"",
+            G::N,
+            G::D,
+            self.0.gap(),
+            self.0.upper_gap()
+        )?;
         for v in G::iter_vertices() {
             writeln!(f, "  {v} [label = \"{v}:{balls}\"]", balls = self.0[v])?;
             for u in G::iter_neighbours(v) {

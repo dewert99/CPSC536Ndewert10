@@ -1,7 +1,10 @@
-mod graph;
 use graph::{Dot, RingGraph};
 
+use crate::graph::TorusGraph;
+
+mod graph;
+
 fn main() {
-    let g = RingGraph::<10>::default();
+    let g = TorusGraph::<3, 10>::default();
     println!("{}", Dot(g));
 }

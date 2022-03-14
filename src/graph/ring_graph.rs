@@ -1,7 +1,9 @@
-use crate::graph::{Bin, Graph};
-use rand::Rng;
-use std::fmt::{Debug, Display, Formatter};
+use std::fmt::{Display, Formatter};
 use std::ops::{Add, Index, IndexMut, Range};
+
+use rand::Rng;
+
+use crate::graph::{Bin, Graph};
 
 pub struct RingGraph<const N: usize>(Box<[Bin; N]>);
 
@@ -12,7 +14,7 @@ impl<const N: usize> Default for RingGraph<N> {
 }
 
 #[derive(Copy, Clone)]
-pub struct RingVertex<const N: usize>(usize);
+pub struct RingVertex<const N: usize>(pub(super) usize);
 
 impl<const N: usize> Add<isize> for RingVertex<N> {
     type Output = RingVertex<N>;
@@ -42,9 +44,17 @@ impl<const N: usize> IndexMut<RingVertex<N>> for RingGraph<N> {
     }
 }
 
+pub(super) const fn calc_d(n: usize) -> usize {
+    match n {
+        1 => 0,
+        2 => 1,
+        _ => 2,
+    }
+}
+
 impl<const N: usize> Graph for RingGraph<N> {
     const N: usize = N;
-    const D: usize = 2;
+    const D: usize = calc_d(N);
     type Vertex = RingVertex<N>;
     type VIter = std::iter::Map<Range<usize>, fn(usize) -> RingVertex<N>>;
     type NIter = std::array::IntoIter<RingVertex<N>, 2>;
