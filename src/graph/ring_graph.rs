@@ -47,6 +47,7 @@ impl<const N: usize> IndexMut<RingVertex<N>> for RingGraph<N> {
 
 pub(super) const fn calc_d(n: usize) -> usize {
     match n {
+        0 => panic!("Graph has no vertices"),
         1 => 0,
         2 => 1,
         _ => 2,
@@ -83,7 +84,6 @@ impl<const N: usize> Graph for RingGraph<N> {
 
 #[test]
 fn test_valid() {
-    RingGraph::<1>::validate();
     RingGraph::<2>::validate();
     RingGraph::<3>::validate();
     RingGraph::<10>::validate();

@@ -3,10 +3,10 @@ use std::ops::{Index, IndexMut};
 
 use itertools::Itertools;
 use rand::Rng;
-use tinyvec::{array_vec, ArrayVecIterator};
+use tinyvec::{array_vec, ArrayVec, ArrayVecIterator};
 
-use crate::graph::ring_graph::calc_d;
-use crate::graph::{Bin, Graph, RingVertex};
+use crate::graph::ring_graph::{calc_d, RingVertex};
+use crate::graph::{Bin, Graph};
 use crate::RingGraph;
 
 pub struct TorusGraph<const X: usize, const Y: usize>(Box<[[Bin; Y]; X]>);
@@ -56,25 +56,30 @@ impl<const X: usize, const Y: usize> Graph for TorusGraph<X, Y> {
             .map(|(vx, vy)| TorusVertex(vx, vy))
     }
 
-    fn iter_neighbours(TorusVertex(vx, vy): TorusVertex<X, Y>) -> Self::NIter {
-        let mut res = array_vec![];
-        res.extend(RingGraph::iter_neighbours(vx).map(|vx| TorusVertex(vx, vy)));
-        res.extend(RingGraph::iter_neighbours(vy).map(|vy| TorusVertex(vx, vy)));
-        res.into_iter()
+    fn iter_neighbours(v: TorusVertex<X, Y>) -> Self::NIter {
+        neighbours(v).into_iter()
     }
 
     fn random_edge(rng: &mut impl Rng) -> (Self::Vertex, Self::Vertex) {
         let vx = RingVertex(rng.gen_range(0..Self::N));
         let vy = RingVertex(rng.gen_range(0..Self::N));
-        let offx = if rng.gen() { 1 } else { -1 };
-        let offy = if rng.gen() { 1 } else { -1 };
-        (TorusVertex(vx, vy), TorusVertex(vx + offx, vy + offy))
+        let v = TorusVertex(vx, vy);
+        let neighbours = neighbours(v);
+        (v, neighbours[rng.gen_range(0..neighbours.len())])
     }
+}
+
+fn neighbours<const X: usize, const Y: usize>(
+    TorusVertex(vx, vy): TorusVertex<X, Y>,
+) -> ArrayVec<[TorusVertex<X, Y>; 4]> {
+    let mut res = array_vec![];
+    res.extend(RingGraph::iter_neighbours(vx).map(|vx| TorusVertex(vx, vy)));
+    res.extend(RingGraph::iter_neighbours(vy).map(|vy| TorusVertex(vx, vy)));
+    res
 }
 
 #[test]
 fn test_valid() {
-    TorusGraph::<1, 1>::validate();
     TorusGraph::<2, 1>::validate();
     TorusGraph::<1, 3>::validate();
     TorusGraph::<2, 5>::validate();

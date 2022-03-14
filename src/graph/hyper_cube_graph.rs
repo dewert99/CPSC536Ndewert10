@@ -80,7 +80,6 @@ impl<const N: usize, const D: usize> Graph for HyperCubeGraph<N, D> {
 
 #[test]
 fn test_valid() {
-    HyperCubeGraph::<1, 0>::validate();
     HyperCubeGraph::<2, 1>::validate();
     HyperCubeGraph::<4, 2>::validate();
     HyperCubeGraph::<8, 3>::validate();

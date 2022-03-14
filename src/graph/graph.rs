@@ -9,6 +9,11 @@ pub type Bin = u32;
 pub trait Graph: IndexMut<Self::Vertex, Output = Bin> + Default {
     const N: usize;
     const D: usize;
+    const C: () = if Self::D == 0 {
+        panic!("Graph has no edges")
+    } else {
+        ()
+    };
     type Vertex: Display + Copy + Eq;
     type VIter: Iterator<Item = Self::Vertex>;
     type NIter: Iterator<Item = Self::Vertex>;
@@ -41,6 +46,12 @@ pub trait Graph: IndexMut<Self::Vertex, Output = Bin> + Default {
                 assert_eq!(Self::iter_neighbours(v).filter(|u2| u == *u2).count(), 1)
             }
         }
+        let mut rng = rand::thread_rng();
+        for _ in 0..100 {
+            let (u, v) = Self::random_edge(&mut rng);
+            assert!(Self::iter_neighbours(u).any(|v2| v == v2), "{u}, {v}");
+        }
+        Self::C
     }
 }
 

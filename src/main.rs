@@ -1,10 +1,10 @@
 use graph::{Dot, RingGraph};
 
-use crate::graph::{HyperCubeGraph, TorusGraph};
+use crate::graph::FullGraph;
 
 mod graph;
 
 fn main() {
-    let g = TorusGraph::<3, 10>::default();
+    let g = FullGraph::<7>::default();
     println!("{}", Dot(g));
 }
