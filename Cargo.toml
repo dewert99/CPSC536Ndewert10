@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 "rand" = "0.8.*" # This is randomized algorithms so we need randomness
 "itertools" = "0.10.*"
+"tinyvec" = { version = "1.5.*", features = ["rustc_1_40"] }

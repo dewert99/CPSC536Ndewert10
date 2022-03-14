@@ -9,7 +9,7 @@ pub type Bin = u32;
 pub trait Graph: IndexMut<Self::Vertex, Output = Bin> + Default {
     const N: usize;
     const D: usize;
-    type Vertex: Display + Copy;
+    type Vertex: Display + Copy + Eq;
     type VIter: Iterator<Item = Self::Vertex>;
     type NIter: Iterator<Item = Self::Vertex>;
 
@@ -29,6 +29,18 @@ pub trait Graph: IndexMut<Self::Vertex, Output = Bin> + Default {
             .fold((0u64, 0u32), |(sum, max), x| (sum + x as u64, max.max(x)));
         let avg = sum / Self::N as u64;
         max - avg as Bin
+    }
+
+    fn validate() {
+        assert_eq!(Self::iter_vertices().count(), Self::N);
+        for v in Self::iter_vertices() {
+            assert_eq!(Self::iter_neighbours(v).count(), Self::D);
+            for u in Self::iter_neighbours(v) {
+                assert!(u != v);
+                assert!(Self::iter_neighbours(u).any(|v2| v == v2));
+                assert_eq!(Self::iter_neighbours(v).filter(|u2| u == *u2).count(), 1)
+            }
+        }
     }
 }
 
