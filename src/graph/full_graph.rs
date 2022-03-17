@@ -14,7 +14,7 @@ impl<const N: usize> Default for FullGraph<N> {
     }
 }
 
-#[derive(Copy, Clone, Default, Eq, PartialEq)]
+#[derive(Copy, Clone, Hash, Eq, PartialEq)]
 pub struct Vertex<const N: usize>(pub(super) usize);
 
 impl<const N: usize> Display for Vertex<N> {
@@ -54,6 +54,10 @@ impl<const N: usize> Graph for FullGraph<N> {
             .take(N)
             .enumerate()
             .filter_map(|(u, v)| if v.0 == u { None } else { Some(Vertex(u)) })
+    }
+
+    fn has_edge(v: Self::Vertex, u: Self::Vertex) -> bool {
+        v != u
     }
 
     fn random_edge(rng: &mut impl Rng) -> (Self::Vertex, Self::Vertex) {

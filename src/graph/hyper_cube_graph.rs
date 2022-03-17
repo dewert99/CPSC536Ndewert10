@@ -14,7 +14,7 @@ impl<const N: usize, const D: usize> Default for HyperCubeGraph<N, D> {
     }
 }
 
-#[derive(Copy, Clone, Default, Eq, PartialEq)]
+#[derive(Copy, Clone, Hash, Eq, PartialEq)]
 pub struct HyperCubeVertex<const D: usize>(usize);
 
 impl<const D: usize> HyperCubeVertex<D> {
@@ -69,6 +69,10 @@ impl<const N: usize, const D: usize> Graph for HyperCubeGraph<N, D> {
             .take(D)
             .enumerate()
             .map(|(i, v)| v.flip(i as u8))
+    }
+
+    fn has_edge(v: Self::Vertex, u: Self::Vertex) -> bool {
+        (v.0 ^ u.0).count_ones() == 1
     }
 
     fn random_edge(rng: &mut impl Rng) -> (Self::Vertex, Self::Vertex) {

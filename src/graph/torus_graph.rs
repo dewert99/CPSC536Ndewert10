@@ -3,7 +3,7 @@ use std::ops::{Index, IndexMut};
 
 use itertools::Itertools;
 use rand::Rng;
-use tinyvec::{array_vec, ArrayVec, ArrayVecIterator};
+use smallvec::{smallvec, SmallVec};
 
 use crate::graph::ring_graph::{calc_d, RingVertex};
 use crate::graph::{Bin, Graph};
@@ -11,7 +11,7 @@ use crate::RingGraph;
 
 pub struct TorusGraph<const X: usize, const Y: usize>(Box<[[Bin; Y]; X]>);
 
-#[derive(Copy, Clone, Default, Eq, PartialEq)]
+#[derive(Copy, Clone, Hash, Eq, PartialEq)]
 pub struct TorusVertex<const X: usize, const Y: usize>(RingVertex<X>, RingVertex<Y>);
 
 impl<const X: usize, const Y: usize> Display for TorusVertex<X, Y> {
@@ -48,7 +48,7 @@ impl<const X: usize, const Y: usize> Graph for TorusGraph<X, Y> {
         itertools::Product<<RingGraph<X> as Graph>::VIter, <RingGraph<Y> as Graph>::VIter>,
         fn((RingVertex<X>, RingVertex<Y>)) -> TorusVertex<X, Y>,
     >;
-    type NIter = ArrayVecIterator<[TorusVertex<X, Y>; 4]>;
+    type NIter = smallvec::IntoIter<[TorusVertex<X, Y>; 4]>;
 
     fn iter_vertices() -> Self::VIter {
         RingGraph::<X>::iter_vertices()
@@ -56,13 +56,23 @@ impl<const X: usize, const Y: usize> Graph for TorusGraph<X, Y> {
             .map(|(vx, vy)| TorusVertex(vx, vy))
     }
 
+    fn has_edge(v: Self::Vertex, u: Self::Vertex) -> bool {
+        if v.0 == u.0 {
+            RingGraph::has_edge(v.1, u.1)
+        } else if v.1 == u.1 {
+            RingGraph::has_edge(v.0, u.0)
+        } else {
+            false
+        }
+    }
+
     fn iter_neighbours(v: TorusVertex<X, Y>) -> Self::NIter {
         neighbours(v).into_iter()
     }
 
     fn random_edge(rng: &mut impl Rng) -> (Self::Vertex, Self::Vertex) {
-        let vx = RingVertex(rng.gen_range(0..Self::N));
-        let vy = RingVertex(rng.gen_range(0..Self::N));
+        let vx = RingVertex(rng.gen_range(0..X));
+        let vy = RingVertex(rng.gen_range(0..Y));
         let v = TorusVertex(vx, vy);
         let neighbours = neighbours(v);
         (v, neighbours[rng.gen_range(0..neighbours.len())])
@@ -71,8 +81,8 @@ impl<const X: usize, const Y: usize> Graph for TorusGraph<X, Y> {
 
 fn neighbours<const X: usize, const Y: usize>(
     TorusVertex(vx, vy): TorusVertex<X, Y>,
-) -> ArrayVec<[TorusVertex<X, Y>; 4]> {
-    let mut res = array_vec![];
+) -> SmallVec<[TorusVertex<X, Y>; 4]> {
+    let mut res = smallvec![];
     res.extend(RingGraph::iter_neighbours(vx).map(|vx| TorusVertex(vx, vy)));
     res.extend(RingGraph::iter_neighbours(vy).map(|vy| TorusVertex(vx, vy)));
     res

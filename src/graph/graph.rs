@@ -1,4 +1,5 @@
 use std::fmt::{Display, Formatter};
+use std::hash::Hash;
 use std::ops::IndexMut;
 
 use itertools::Itertools;
@@ -14,12 +15,13 @@ pub trait Graph: IndexMut<Self::Vertex, Output = Bin> + Default {
     } else {
         ()
     };
-    type Vertex: Display + Copy + Eq;
+    type Vertex: Display + Copy + Hash + Eq;
     type VIter: Iterator<Item = Self::Vertex>;
     type NIter: Iterator<Item = Self::Vertex>;
 
     fn iter_vertices() -> Self::VIter;
     fn iter_neighbours(v: Self::Vertex) -> Self::NIter;
+    fn has_edge(v: Self::Vertex, u: Self::Vertex) -> bool;
     fn random_edge(rng: &mut impl Rng) -> (Self::Vertex, Self::Vertex);
 
     fn gap(&self) -> Bin {
@@ -43,13 +45,17 @@ pub trait Graph: IndexMut<Self::Vertex, Output = Bin> + Default {
             for u in Self::iter_neighbours(v) {
                 assert!(u != v);
                 assert!(Self::iter_neighbours(u).any(|v2| v == v2));
-                assert_eq!(Self::iter_neighbours(v).filter(|u2| u == *u2).count(), 1)
+                assert_eq!(Self::iter_neighbours(v).filter(|u2| u == *u2).count(), 1);
+                assert!(Self::has_edge(v, u));
+                assert!(Self::has_edge(u, v));
             }
         }
         let mut rng = rand::thread_rng();
         for _ in 0..100 {
             let (u, v) = Self::random_edge(&mut rng);
             assert!(Self::iter_neighbours(u).any(|v2| v == v2), "{u}, {v}");
+            assert!(Self::has_edge(u, v));
+            assert!(Self::has_edge(v, u));
         }
         Self::C
     }

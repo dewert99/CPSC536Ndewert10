@@ -2,7 +2,7 @@ use std::fmt::{Display, Formatter};
 use std::ops::{Add, Index, IndexMut, Range};
 
 use rand::Rng;
-use tinyvec::{array_vec, ArrayVecIterator};
+use smallvec::smallvec;
 
 use crate::graph::{Bin, Graph};
 
@@ -14,7 +14,7 @@ impl<const N: usize> Default for RingGraph<N> {
     }
 }
 
-#[derive(Copy, Clone, Default, Eq, PartialEq)]
+#[derive(Copy, Clone, Hash, Eq, PartialEq)]
 pub struct RingVertex<const N: usize>(pub(super) usize);
 
 impl<const N: usize> Add<isize> for RingVertex<N> {
@@ -59,7 +59,7 @@ impl<const N: usize> Graph for RingGraph<N> {
     const D: usize = calc_d(N);
     type Vertex = RingVertex<N>;
     type VIter = std::iter::Map<Range<usize>, fn(usize) -> RingVertex<N>>;
-    type NIter = ArrayVecIterator<[RingVertex<N>; 2]>;
+    type NIter = smallvec::IntoIter<[RingVertex<N>; 2]>;
 
     fn iter_vertices() -> Self::VIter {
         (0..N).map(|x| RingVertex(x))
@@ -67,12 +67,16 @@ impl<const N: usize> Graph for RingGraph<N> {
 
     fn iter_neighbours(v: RingVertex<N>) -> Self::NIter {
         match Self::D {
-            0 => array_vec![],
-            1 => array_vec![v + 1],
-            2 => array_vec![v + 1, v + -1],
+            0 => smallvec![],
+            1 => smallvec![v + 1],
+            2 => smallvec![v + 1, v + -1],
             _ => unreachable!(),
         }
         .into_iter()
+    }
+
+    fn has_edge(v: Self::Vertex, u: Self::Vertex) -> bool {
+        u == v + 1 || u == v + -1
     }
 
     fn random_edge(rng: &mut impl Rng) -> (Self::Vertex, Self::Vertex) {
