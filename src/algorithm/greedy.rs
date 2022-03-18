@@ -1,18 +1,18 @@
 use rand::Rng;
 
-use crate::graph::Graph;
+use crate::graph::{BinGraph, Graph};
 
 use super::LoadBalanceAlgorithm;
 
 pub struct Greedy;
 
 impl<G: Graph> LoadBalanceAlgorithm<G> for Greedy {
-    fn for_graph(_: &G) -> Self {
+    fn for_graph(_: &BinGraph<G>) -> Self {
         Greedy
     }
     fn choose_between(
         &mut self,
-        graph: &G,
+        graph: &BinGraph<G>,
         u: G::Vertex,
         v: G::Vertex,
         rng: &mut impl Rng,

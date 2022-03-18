@@ -1,91 +1,76 @@
 use std::fmt::{Display, Formatter};
 use std::iter::{Enumerate, Map, Repeat, Take};
-use std::ops::{Index, IndexMut, Range};
+use std::ops::Range;
 
 use rand::Rng;
 
-use crate::graph::{Bin, Graph};
+use crate::graph::Graph;
 
-pub struct HyperCubeGraph<const N: usize, const D: usize>(Box<[Bin; N]>);
-
-impl<const N: usize, const D: usize> Default for HyperCubeGraph<N, D> {
-    fn default() -> Self {
-        HyperCubeGraph(Box::new([0; N]))
-    }
+pub struct HyperCubeGraph {
+    pub d: u8,
 }
 
 #[derive(Copy, Clone, Hash, Eq, PartialEq)]
-pub struct HyperCubeVertex<const D: usize>(usize);
+pub struct HyperCubeVertex(usize);
 
-impl<const D: usize> HyperCubeVertex<D> {
-    fn flip(self, rhs: u8) -> HyperCubeVertex<D> {
+impl HyperCubeVertex {
+    fn flip(self, rhs: u8) -> HyperCubeVertex {
         HyperCubeVertex(self.0 ^ (1 << rhs))
     }
 }
 
-impl<const D: usize> Display for HyperCubeVertex<D> {
+impl Display for HyperCubeVertex {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:0d$b}", self.0, d = D)
+        write!(f, "{:b}", self.0)
     }
 }
 
-impl<const N: usize, const D: usize> Index<HyperCubeVertex<D>> for HyperCubeGraph<N, D> {
-    type Output = Bin;
-
-    fn index(&self, index: HyperCubeVertex<D>) -> &Self::Output {
-        &self.0[index.0]
-    }
-}
-
-impl<const N: usize, const D: usize> IndexMut<HyperCubeVertex<D>> for HyperCubeGraph<N, D> {
-    fn index_mut(&mut self, index: HyperCubeVertex<D>) -> &mut Self::Output {
-        &mut self.0[index.0]
-    }
-}
-
-const fn make_equal(a: usize, b: usize) -> usize {
-    if a != b {
-        panic!()
-    }
-    a
-}
-
-impl<const N: usize, const D: usize> Graph for HyperCubeGraph<N, D> {
-    const N: usize = make_equal(N, 1 << D);
-    const D: usize = D;
-    type Vertex = HyperCubeVertex<D>;
-    type VIter = std::iter::Map<Range<usize>, fn(usize) -> HyperCubeVertex<D>>;
+impl Graph for HyperCubeGraph {
+    type Vertex = HyperCubeVertex;
+    type VIter = std::iter::Map<Range<usize>, fn(usize) -> HyperCubeVertex>;
     type NIter = Map<
-        Enumerate<Take<Repeat<HyperCubeVertex<D>>>>,
-        fn((usize, HyperCubeVertex<D>)) -> HyperCubeVertex<D>,
+        Enumerate<Take<Repeat<HyperCubeVertex>>>,
+        fn((usize, HyperCubeVertex)) -> HyperCubeVertex,
     >;
 
-    fn iter_vertices() -> Self::VIter {
-        (0..N).map(|x| HyperCubeVertex(x))
+    fn n(&self) -> usize {
+        1 << self.d
     }
 
-    fn iter_neighbours(v: HyperCubeVertex<D>) -> Self::NIter {
+    fn d(&self) -> usize {
+        self.d as usize
+    }
+
+    fn as_idx(&self, v: Self::Vertex) -> usize {
+        v.0
+    }
+
+    fn iter_vertices(&self) -> Self::VIter {
+        (0..self.n()).map(|x| HyperCubeVertex(x))
+    }
+
+    fn iter_neighbours(&self, v: HyperCubeVertex) -> Self::NIter {
         std::iter::repeat(v)
-            .take(D)
+            .take(self.d())
             .enumerate()
             .map(|(i, v)| v.flip(i as u8))
     }
 
-    fn has_edge(v: Self::Vertex, u: Self::Vertex) -> bool {
+    fn has_edge(&self, v: Self::Vertex, u: Self::Vertex) -> bool {
         (v.0 ^ u.0).count_ones() == 1
     }
 
-    fn random_edge(rng: &mut impl Rng) -> (Self::Vertex, Self::Vertex) {
-        let v = HyperCubeVertex(rng.gen_range(0..N));
-        let bit = rng.gen_range(0..D);
+    fn random_edge(&self, rng: &mut impl Rng) -> (Self::Vertex, Self::Vertex) {
+        let v = HyperCubeVertex(rng.gen_range(0..self.n()));
+        let bit = rng.gen_range(0..self.d);
         (v, v.flip(bit as u8))
     }
 }
 
 #[test]
 fn test_valid() {
-    HyperCubeGraph::<2, 1>::validate();
-    HyperCubeGraph::<4, 2>::validate();
-    HyperCubeGraph::<8, 3>::validate();
-    HyperCubeGraph::<32, 5>::validate();
+    HyperCubeGraph { d: 1 }.validate();
+    HyperCubeGraph { d: 2 }.validate();
+    HyperCubeGraph { d: 3 }.validate();
+    HyperCubeGraph { d: 5 }.validate();
 }

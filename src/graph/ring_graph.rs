@@ -1,47 +1,21 @@
 use std::fmt::{Display, Formatter};
-use std::ops::{Add, Index, IndexMut, Range};
+use std::ops::Range;
 
 use rand::Rng;
 use smallvec::smallvec;
 
-use crate::graph::{Bin, Graph};
+use crate::graph::Graph;
 
-pub struct RingGraph<const N: usize>(Box<[Bin; N]>);
-
-impl<const N: usize> Default for RingGraph<N> {
-    fn default() -> Self {
-        RingGraph(Box::new([0; N]))
-    }
+pub struct RingGraph {
+    pub n: usize,
 }
 
 #[derive(Copy, Clone, Hash, Eq, PartialEq)]
-pub struct RingVertex<const N: usize>(pub(super) usize);
+pub struct RingVertex(pub(super) usize);
 
-impl<const N: usize> Add<isize> for RingVertex<N> {
-    type Output = RingVertex<N>;
-
-    fn add(self, rhs: isize) -> Self::Output {
-        RingVertex((self.0 as isize + rhs).rem_euclid(N as isize) as usize)
-    }
-}
-
-impl<const N: usize> Display for RingVertex<N> {
+impl Display for RingVertex {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         Display::fmt(&self.0, f)
-    }
-}
-
-impl<const N: usize> Index<RingVertex<N>> for RingGraph<N> {
-    type Output = Bin;
-
-    fn index(&self, index: RingVertex<N>) -> &Self::Output {
-        &self.0[index.0]
-    }
-}
-
-impl<const N: usize> IndexMut<RingVertex<N>> for RingGraph<N> {
-    fn index_mut(&mut self, index: RingVertex<N>) -> &mut Self::Output {
-        &mut self.0[index.0]
     }
 }
 
@@ -54,41 +28,57 @@ pub(super) const fn calc_d(n: usize) -> usize {
     }
 }
 
-impl<const N: usize> Graph for RingGraph<N> {
-    const N: usize = N;
-    const D: usize = calc_d(N);
-    type Vertex = RingVertex<N>;
-    type VIter = std::iter::Map<Range<usize>, fn(usize) -> RingVertex<N>>;
-    type NIter = smallvec::IntoIter<[RingVertex<N>; 2]>;
+impl Graph for RingGraph {
+    type Vertex = RingVertex;
+    type VIter = std::iter::Map<Range<usize>, fn(usize) -> RingVertex>;
+    type NIter = smallvec::IntoIter<[RingVertex; 2]>;
 
-    fn iter_vertices() -> Self::VIter {
-        (0..N).map(|x| RingVertex(x))
+    fn n(&self) -> usize {
+        self.n
     }
 
-    fn iter_neighbours(v: RingVertex<N>) -> Self::NIter {
-        match Self::D {
+    fn d(&self) -> usize {
+        calc_d(self.n)
+    }
+
+    fn as_idx(&self, v: Self::Vertex) -> usize {
+        v.0
+    }
+
+    fn iter_vertices(&self) -> Self::VIter {
+        (0..self.n()).map(|x| RingVertex(x))
+    }
+
+    fn iter_neighbours(&self, v: RingVertex) -> Self::NIter {
+        match self.d() {
             0 => smallvec![],
-            1 => smallvec![v + 1],
-            2 => smallvec![v + 1, v + -1],
+            1 => smallvec![self.add(v, 1)],
+            2 => smallvec![self.add(v, 1), self.add(v, -1)],
             _ => unreachable!(),
         }
         .into_iter()
     }
 
-    fn has_edge(v: Self::Vertex, u: Self::Vertex) -> bool {
-        u == v + 1 || u == v + -1
+    fn has_edge(&self, v: Self::Vertex, u: Self::Vertex) -> bool {
+        u == self.add(v, 1) || u == self.add(v, -1)
     }
 
-    fn random_edge(rng: &mut impl Rng) -> (Self::Vertex, Self::Vertex) {
-        let v = RingVertex(rng.gen_range(0..N));
+    fn random_edge(&self, rng: &mut impl Rng) -> (Self::Vertex, Self::Vertex) {
+        let v = RingVertex(rng.gen_range(0..self.n()));
         let off = if rng.gen() { 1 } else { -1 };
-        (v, v + off)
+        (v, self.add(v, off))
+    }
+}
+
+impl RingGraph {
+    fn add(&self, v: RingVertex, rhs: isize) -> RingVertex {
+        RingVertex((v.0 as isize + rhs).rem_euclid(self.n as isize) as usize)
     }
 }
 
 #[test]
 fn test_valid() {
-    RingGraph::<2>::validate();
-    RingGraph::<3>::validate();
-    RingGraph::<10>::validate();
+    RingGraph { n: 2 }.validate();
+    RingGraph { n: 3 }.validate();
+    RingGraph { n: 4 }.validate();
 }
