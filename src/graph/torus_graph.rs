@@ -4,9 +4,8 @@ use itertools::Itertools;
 use rand::Rng;
 use smallvec::{smallvec, SmallVec};
 
-use crate::graph::ring_graph::{calc_d, RingVertex};
-use crate::graph::Graph;
-use crate::RingGraph;
+use super::ring_graph::{calc_d, RingVertex};
+use super::{Graph, RingGraph};
 
 pub struct TorusGraph {
     x: usize,
