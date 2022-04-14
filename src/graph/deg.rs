@@ -1,3 +1,4 @@
+// Algorithm based on https://doi.org/10.1016/0196-6774(90)90029-E
 use std::iter::repeat_with;
 use std::mem::swap;
 

@@ -5,6 +5,6 @@ mod algorithm;
 mod graph;
 
 fn main() {
-    let g = load_balanced::<_, Greedy>(ArbitraryGraph::random(28, 3), 0);
+    let g = load_balanced::<_, Greedy>(ArbitraryGraph::random(28, 3), 280);
     println!("{}", g);
 }

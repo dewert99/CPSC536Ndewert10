@@ -50,6 +50,7 @@ pub trait Graph {
     }
 }
 
+// Wraps a graph by attaching bins to each of it's vertices
 pub struct BinGraph<G: Graph> {
     graph: G,
     data: Box<[Bin]>,
@@ -107,7 +108,7 @@ impl<G: Graph> Display for BinGraph<G> {
         writeln!(f, "strict graph {{")?;
         writeln!(
             f,
-            "label = \"N = {}, D = {}, gap = {}, upper_gap = {}\"",
+            "label = \"n = {}, d = {}, gap = {}, upper_gap = {}\"",
             self.n(),
             self.d(),
             self.gap(),

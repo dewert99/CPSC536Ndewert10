@@ -17,11 +17,12 @@ impl<G: Graph> LoadBalanceAlgorithm<G> for Greedy {
         v: G::Vertex,
         rng: &mut impl Rng,
     ) -> bool {
+        // choose the bin with less balls
         let (u, v) = (graph[u], graph[v]);
         if u < v {
             true
         } else if u == v {
-            rng.gen()
+            rng.gen() // break ties with randomness
         } else {
             false
         }
